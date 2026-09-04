@@ -1,0 +1,6 @@
+{
+  "name": "Solutions Engine",
+  "description": "AI-powered problem solving, 5-Whys root cause diagnosis, solution strategy generator, and execution tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
