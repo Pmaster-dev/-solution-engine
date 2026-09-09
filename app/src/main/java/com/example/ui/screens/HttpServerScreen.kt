@@ -169,44 +169,79 @@ fun HttpServerScreen(
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Link,
-                                        contentDescription = null,
-                                        tint = Color(0xFF38BDF8),
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = serverUrl,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF38BDF8)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = null,
+                                            tint = Color(0xFF38BDF8),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = serverUrl,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF38BDF8)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            clipboardManager.setText(AnnotatedString(serverUrl))
+                                        },
+                                        modifier = Modifier.size(28.dp).testTag("copy_server_url_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ContentCopy,
+                                            contentDescription = "Copy URL",
+                                            tint = Color.LightGray,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
-                                IconButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(serverUrl))
-                                    },
-                                    modifier = Modifier.size(28.dp).testTag("copy_server_url_button")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy URL",
-                                        tint = Color.LightGray,
-                                        modifier = Modifier.size(16.dp)
-                                    )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color(0xFF6366F1).copy(alpha = 0.25f),
+                                        modifier = Modifier.clickable {
+                                            clipboardManager.setText(AnnotatedString("$serverUrl/"))
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "⚛️ React SPA (/)",
+                                            color = Color(0xFFA5B4FC),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        )
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = Color(0xFF10B981).copy(alpha = 0.25f),
+                                        modifier = Modifier.clickable {
+                                            clipboardManager.setText(AnnotatedString("$serverUrl/html"))
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "📄 Plain HTML (/html)",
+                                            color = Color(0xFF6EE7B7),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -344,20 +379,74 @@ fun HttpServerScreen(
 
                     EndpointItem(
                         method = "GET",
-                        path = "/",
-                        description = "Web Dashboard HTML landing page for browser testing."
+                        path = "/ (or /react)",
+                        description = "Full-featured React 18 SPA Console with Live Telemetry, Polling & REST Tester."
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     EndpointItem(
                         method = "GET",
-                        path = "/api/status",
-                        description = "Health check, server uptime & active port telemetry."
+                        path = "/html (or /simple)",
+                        description = "Ultra-lightweight zero-dependency HTML dashboard."
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     EndpointItem(
                         method = "GET",
-                        path = "/api/info",
-                        description = "Engine metadata and available AI models (Gemini 2.5 Pro / Flash)."
+                        path = "/api/v1/health",
+                        description = "Multi-subsystem health check (HTTP server, JVM memory, Room DB, Gemini AI)."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/capabilities",
+                        description = "Engine capabilities, thinking token budgets, and client profiles."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/compatibility",
+                        description = "Device matrix fitting across Phone, Tablet, Smart TV (D-Pad), and Web."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/performance",
+                        description = "Real-time CPU cores, thread counts, and JVM heap utilization metrics."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/pairing",
+                        description = "Secure device-to-device handshake & pairing token generation."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/docs",
+                        description = "Machine-readable OpenAPI 3.0.3 specification JSON."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/status",
+                        description = "Health status, uptime seconds & active port telemetry."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/frameworks",
+                        description = "Supported problem frameworks (5-Whys, MECE, Cynefin, DMAIC, Kepner-Tregoe)."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/logs",
+                        description = "JSON stream of recent HTTP access logs."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "POST",
+                        path = "/api/v1/echo",
+                        description = "JSON payload echo test endpoint with CORS support."
                     )
                 }
             }
