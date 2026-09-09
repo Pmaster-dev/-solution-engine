@@ -230,6 +230,12 @@ object ServerWebPages {
                                 (activeTab === 'logs' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-400 hover:text-slate-200")}>
                             📜 Live Logs ({liveLogs.length})
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('export')}
+                            class={"px-4 py-2 text-sm font-semibold border-b-2 transition-all " + 
+                                (activeTab === 'export' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-400 hover:text-slate-200")}>
+                            📥 Export & Download
+                        </button>
                     </div>
 
                     {/* Tab 1: v1 Endpoints & OpenApi Docs */}
@@ -467,6 +473,85 @@ object ServerWebPages {
                         </div>
                     )}
 
+                    {/* Tab: Export & Download (Bypasses 'Download not supported at this time') */}
+                    {activeTab === 'export' && (
+                        <div class="space-y-6">
+                            <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-200 flex items-start gap-3">
+                                <span class="text-lg">💡</span>
+                                <div>
+                                    <strong class="font-bold text-amber-300">Browser / Emulator Download Notice:</strong>
+                                    <p class="mt-1 text-amber-200/90 leading-relaxed">
+                                        If your browser, Android WebView, or streaming emulator reports <em>"Download not supported at this time"</em>, you can bypass browser download handlers completely. Use <strong>📋 Copy to Clipboard</strong>, <strong>👁️ View Raw Inline</strong>, or <strong>💾 Save Directly to Device VVOL</strong> below.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {[
+                                    {
+                                        title: "OpenAPI 3.0 API Specification",
+                                        desc: "Complete REST API catalog, endpoints, and schemas in JSON format.",
+                                        endpoint: "/api/v1/docs",
+                                        badge: "Spec"
+                                    },
+                                    {
+                                        title: "Device & TV Hardware Profile",
+                                        desc: "Amlogic SoC, FireOS, Android TV, and recommended browser engine profile.",
+                                        endpoint: "/api/v1/compatibility",
+                                        badge: "Hardware"
+                                    },
+                                    {
+                                        title: "Subsystem Telemetry & Health",
+                                        desc: "JVM heap, memory stats, thread metrics, and component health audit.",
+                                        endpoint: "/api/v1/health",
+                                        badge: "Telemetry"
+                                    },
+                                    {
+                                        title: "Recent HTTP Access Logs",
+                                        desc: "Chronological log entries of all incoming HTTP requests and latencies.",
+                                        endpoint: "/api/v1/logs",
+                                        badge: "Logs"
+                                    }
+                                ].map((item, idx) => (
+                                    <div key={idx} class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h4 class="font-bold text-sm text-white">{item.title}</h4>
+                                                <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                                    {item.badge}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-slate-400 mb-4">{item.desc}</p>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-800/80">
+                                            <button 
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await fetch(item.endpoint);
+                                                        const data = await res.text();
+                                                        await navigator.clipboard.writeText(data);
+                                                        alert("📋 Copied " + item.title + " to clipboard successfully!");
+                                                    } catch (e) {
+                                                        alert("Error copying: " + e.message);
+                                                    }
+                                                }}
+                                                class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center justify-center gap-1">
+                                                <span>📋 Copy Text</span>
+                                            </button>
+                                            <a 
+                                                href={item.endpoint} 
+                                                target="_blank"
+                                                rel="noopener"
+                                                class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition flex items-center justify-center gap-1 text-center">
+                                                <span>👁️ View Inline</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Response Viewer (Active if response exists) */}
                     {apiResponse && (
                         <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
@@ -618,13 +703,16 @@ object ServerWebPages {
                 <li><code>GET <a href="/api/v1/pairing">/api/v1/pairing</a></code> &mdash; Secure cross-device handshake token</li>
                 <li><code>GET <a href="/api/v1/status">/api/v1/status</a></code> &mdash; Server status and uptime counter</li>
                 <li><code>GET <a href="/api/v1/frameworks">/api/v1/frameworks</a></code> &mdash; Problem solving frameworks directory</li>
+                <li><code>GET <a href="/api/v1/wol?mac=AA:BB:CC:DD:EE:FF">/api/v1/wol</a></code> &mdash; Wake-on-LAN magic packet broadcaster</li>
+                <li><code>GET <a href="/api/v1/vvol">/api/v1/vvol</a></code> &mdash; Virtual Storage Volumes (Internal & PNY USB mounts)</li>
+                <li><code>GET <a href="/api/v1/bot/status">/api/v1/bot/status</a></code> &mdash; AsyncBot & SyncBot resilience queue</li>
                 <li><code>GET <a href="/api/v1/logs">/api/v1/logs</a></code> &mdash; Real-time HTTP access logs</li>
                 <li><code>GET <a href="/api/v1/ping">/api/v1/ping</a></code> &mdash; Round-trip ping check</li>
             </ul>
         </div>
 
-        <div class="card" style="font-size: 0.85rem; color: #94a3b8;">
-            <p style="margin:0;">💡 <strong>Tip:</strong> Open <a href="/">/</a> in your browser on another phone, tablet, or laptop on the same Wi-Fi network to use the interactive React console!</p>
+        <div class="card" style="font-size: 0.85rem; color: #f59e0b; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);">
+            <p style="margin:0;">💡 <strong>Download Not Supported?</strong> In mobile browsers, Silk, or streaming emulators, standard downloads are often disabled. Use the <a href="/" style="color: #fbbf24; font-weight: bold;">Export & Download</a> tab in the React Console to copy data directly to your clipboard or stream raw JSON inline.</p>
         </div>
     </div>
 </body>

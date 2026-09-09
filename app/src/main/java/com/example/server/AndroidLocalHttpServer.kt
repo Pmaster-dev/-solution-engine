@@ -42,6 +42,9 @@ class AndroidLocalHttpServer(
     private var isListening = false
     private var serverThread: Thread? = null
 
+    private val virtualVolumeManager = VirtualVolumeManager(context)
+    val asyncBot = AsyncBot()
+
     private val _serverState = MutableStateFlow(HttpServerState(hostIp = getDeviceIpAddress()))
     val serverState: StateFlow<HttpServerState> = _serverState.asStateFlow()
 
@@ -150,8 +153,15 @@ class AndroidLocalHttpServer(
                 val startedAt = _serverState.value.startedAt
                 val uptimeSec = (System.currentTimeMillis() - startedAt) / 1000
 
-                // Clean path of query parameters for routing
+                // Clean path and extract query parameters
                 val cleanPath = path.substringBefore("?")
+                val queryString = path.substringAfter("?", "")
+                val queryParams = if (queryString.isNotEmpty()) {
+                    queryString.split("&").mapNotNull { param ->
+                        val parts = param.split("=", limit = 2)
+                        if (parts.isNotEmpty()) parts[0] to (parts.getOrNull(1) ?: "") else null
+                    }.toMap()
+                } else emptyMap()
 
                 val (statusCode, contentType, responseBody) = when {
                     cleanPath == "/" || cleanPath == "/react" -> {
@@ -172,7 +182,7 @@ class AndroidLocalHttpServer(
                         Triple(200, "application/json; charset=UTF-8", json)
                     }
                     cleanPath == "/api/docs" || cleanPath == "/api/v1/docs" -> {
-                        val json = """{"openapi":"3.0.3","info":{"title":"Solutions Engine Local Android Server API","version":"1.0.0","description":"Edge server running natively on Android providing REST APIs, device health, pairing, capability negotiation, and telemetry."},"servers":[{"url":"http://$currentHost:$currentPort","description":"Active Android Local Device"}],"endpoints":[{"path":"/api/v1/status","method":"GET","description":"Server operational status and uptime."},{"path":"/api/v1/health","method":"GET","description":"Multi-subsystem health telemetry check."},{"path":"/api/v1/capabilities","method":"GET","description":"Feature matrix, AI models, and framework support."},{"path":"/api/v1/compatibility","method":"GET","description":"Client cross-platform pairing matrix (Web, Mobile, TV, IoT)."},{"path":"/api/v1/performance","method":"GET","description":"System performance metrics (JVM memory, thread counts, GC)."},{"path":"/api/v1/pairing","method":"GET/POST","description":"Secure device-to-device handshake & session registration."},{"path":"/api/v1/frameworks","method":"GET","description":"Structured analytical problem-solving models."},{"path":"/api/v1/logs","method":"GET","description":"Recent HTTP access traffic logs."},{"path":"/api/v1/echo","method":"POST","description":"CORS reflection test endpoint."}]}"""
+                        val json = """{"openapi":"3.0.3","info":{"title":"Solutions Engine Local Android Server API","version":"1.0.0","description":"Edge server running natively on Android providing REST APIs, device health, pairing, capability negotiation, and telemetry."},"servers":[{"url":"http://$currentHost:$currentPort","description":"Active Android Local Device"}],"endpoints":[{"path":"/api/v1/status","method":"GET","description":"Server operational status and uptime."},{"path":"/api/v1/health","method":"GET","description":"Multi-subsystem health telemetry check."},{"path":"/api/v1/capabilities","method":"GET","description":"Feature matrix, AI models, and framework support."},{"path":"/api/v1/compatibility","method":"GET","description":"Hardware profiling, Amlogic/FireOS/Android TV, and browser engine."},{"path":"/api/v1/performance","method":"GET","description":"System performance metrics (JVM memory, thread counts, GC)."},{"path":"/api/v1/pairing","method":"GET/POST","description":"Secure device-to-device handshake & session registration."},{"path":"/api/v1/wol","method":"GET/POST","description":"Wake-on-LAN magic packet dispatcher for Windows, WSL, and Linux servers."},{"path":"/api/v1/vvol","method":"GET","description":"Virtual Storage Volumes index (internal files, cache, native libs, PNY USB)."},{"path":"/api/v1/bot/status","method":"GET","description":"SyncBot & AsyncBot job queue status and blackout resilience history."},{"path":"/api/v1/frameworks","method":"GET","description":"Structured analytical problem-solving models."},{"path":"/api/v1/logs","method":"GET","description":"Recent HTTP access traffic logs."},{"path":"/api/v1/echo","method":"POST","description":"CORS reflection test endpoint."}]}"""
                         Triple(200, "application/json; charset=UTF-8", json)
                     }
                     cleanPath == "/api/capabilities" || cleanPath == "/api/v1/capabilities" -> {
@@ -180,7 +190,63 @@ class AndroidLocalHttpServer(
                         Triple(200, "application/json; charset=UTF-8", json)
                     }
                     cleanPath == "/api/compatibility" || cleanPath == "/api/v1/compatibility" -> {
-                        val json = """{"platform":"Android OS","minClientVersion":"1.0.0","protocols":["HTTP/1.1","REST/JSON","CORS"],"screenProfiles":{"phone":{"support":"Full Native Compose UI","responsive":true},"tablet":{"support":"Master-Detail Two-Pane Canvas","responsive":true},"smartTv":{"support":"10-Foot Spatial Navigation / D-Pad Remote Ready","dpadAccessible":true,"viewport":"1080p/4K"},"webConsole":{"support":"React 18 Single-Page Application (SPA) + Minimal HTML5 Fallback"}},"security":{"transport":"Local Wi-Fi Network / Direct Socket","authentication":{"supportedModes":["pairing-token","open-lan"],"activeMode":"pairing-token"}}}"""
+                        val profile = TvPlatformDetector.detect(context)
+                        val json = """{"platform":"Android OS","deviceFamily":"${profile.family}","brand":"${profile.brand}","model":"${profile.model}","hardware":"${profile.hardware}","isAmlogic":${profile.isAmlogic},"androidApiLevel":${profile.androidApiLevel},"isPieOrOlder":${profile.isPieOrOlder},"defaultBrowserEngine":"${profile.defaultBrowserEngine}","supports10FtUi":${profile.supports10FtUi},"hasUsbHost":${profile.hasUsbHost},"protocols":["HTTP/1.1","REST/JSON","CORS","UDP-WoL"],"screenProfiles":{"phone":{"support":"Full Native Compose UI","responsive":true},"tablet":{"support":"Master-Detail Two-Pane Canvas","responsive":true},"smartTv":{"support":"10-Foot Spatial Navigation / D-Pad Remote Ready","dpadAccessible":true,"viewport":"1080p/4K"},"webConsole":{"support":"React 18 Single-Page Application (SPA) + Minimal HTML5 Fallback"}},"security":{"transport":"Local Wi-Fi Network / Direct Socket","authentication":{"supportedModes":["pairing-token","open-lan"],"activeMode":"pairing-token"}}}"""
+                        Triple(200, "application/json; charset=UTF-8", json)
+                    }
+                    cleanPath == "/api/v1/wol" || cleanPath == "/api/wol" -> {
+                        val mac = queryParams["mac"] ?: "AA:BB:CC:DD:EE:FF"
+                        val ip = queryParams["ip"] ?: "255.255.255.255"
+                        val name = queryParams["name"] ?: "Remote Host"
+                        val wolResult = kotlinx.coroutines.runBlocking {
+                            WakeOnLanService.wake(WolTarget(name = name, macAddress = mac, broadcastIp = ip))
+                        }
+                        val json = if (wolResult.isSuccess) {
+                            """{"status":"SUCCESS","message":"${wolResult.getOrNull()}","target":{"name":"$name","mac":"$mac","broadcastIp":"$ip"},"timestamp":${System.currentTimeMillis()}}"""
+                        } else {
+                            """{"status":"ERROR","message":"${wolResult.exceptionOrNull()?.message}","target":{"name":"$name","mac":"$mac","broadcastIp":"$ip"},"timestamp":${System.currentTimeMillis()}}"""
+                        }
+                        Triple(200, "application/json; charset=UTF-8", json)
+                    }
+                    cleanPath == "/api/v1/vvol" || cleanPath == "/api/vvol" || cleanPath == "/api/v1/fs/volumes" -> {
+                        val volumes = virtualVolumeManager.getMountedVolumes()
+                        val volsJson = volumes.joinToString(prefix = "[", postfix = "]") { v ->
+                            """{"id":"${v.id}","name":"${v.displayName}","path":"${v.rootDir.absolutePath}","readOnly":${v.isReadOnly},"description":"${v.description}","exists":${v.rootDir.exists()}}"""
+                        }
+                        val json = """{"status":"OK","totalVolumes":${volumes.size},"volumes":$volsJson,"timestamp":${System.currentTimeMillis()}}"""
+                        Triple(200, "application/json; charset=UTF-8", json)
+                    }
+                    cleanPath == "/api/v1/fs/browse" || cleanPath == "/api/fs/browse" -> {
+                        val volumeId = queryParams["volume"] ?: "app-files"
+                        val subPath = queryParams["path"] ?: ""
+                        val entries = virtualVolumeManager.listDirectory(volumeId, subPath)
+                        val json = if (entries != null) {
+                            val itemsJson = entries.joinToString(prefix = "[", postfix = "]") { f ->
+                                """{"name":"${f.name}","relativePath":"${f.relativePath}","isDirectory":${f.isDirectory},"sizeBytes":${f.sizeBytes},"lastModified":${f.lastModified},"canRead":${f.canRead},"canWrite":${f.canWrite}}"""
+                            }
+                            """{"status":"OK","volumeId":"$volumeId","subPath":"$subPath","count":${entries.size},"entries":$itemsJson,"timestamp":${System.currentTimeMillis()}}"""
+                        } else {
+                            """{"status":"ERROR","message":"Invalid volume or path traversal rejected","volumeId":"$volumeId","subPath":"$subPath"}"""
+                        }
+                        Triple(200, "application/json; charset=UTF-8", json)
+                    }
+                    cleanPath == "/api/v1/fs/resolve" || cleanPath == "/api/fs/resolve" -> {
+                        val volumeId = queryParams["volume"] ?: "app-files"
+                        val subPath = queryParams["path"] ?: ""
+                        val file = virtualVolumeManager.resolveFile(volumeId, subPath)
+                        val json = if (file != null) {
+                            """{"status":"OK","volumeId":"$volumeId","relativePath":"$subPath","canonicalPath":"${file.canonicalPath}","exists":${file.exists()},"isDirectory":${file.isDirectory},"length":${file.length()},"canRead":${file.canRead()},"canWrite":${file.canWrite()}}"""
+                        } else {
+                            """{"status":"ERROR","message":"Path traversal prohibited or volume unrecognized","volumeId":"$volumeId","relativePath":"$subPath"}"""
+                        }
+                        Triple(200, "application/json; charset=UTF-8", json)
+                    }
+                    cleanPath == "/api/v1/bot/status" || cleanPath == "/api/bot/status" -> {
+                        val history = asyncBot.getHistory()
+                        val historyJson = history.joinToString(prefix = "[", postfix = "]") { job ->
+                            """{"jobId":"${job.jobId}","status":"${job.status}","source":"${job.sourcePath}","destination":"${job.destinationPath}","message":"${job.message}","timestamp":${job.timestamp}}"""
+                        }
+                        val json = """{"status":"OK","asyncBotActive":true,"syncBotReady":true,"recentJobs":$historyJson,"timestamp":${System.currentTimeMillis()}}"""
                         Triple(200, "application/json; charset=UTF-8", json)
                     }
                     cleanPath == "/api/performance" || cleanPath == "/api/v1/performance" -> {

@@ -444,6 +444,24 @@ fun HttpServerScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/wol?mac=AA:BB:CC:DD:EE:FF",
+                        description = "Wake-on-LAN magic packet UDP broadcaster for Windows, WSL & Linux servers."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/vvol",
+                        description = "Virtual Storage Volumes index (internal files, cache, .so libs, PNY USB/OTG)."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/bot/status",
+                        description = "AsyncBot resilience queue status and SyncBot atomic verification history."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
                         method = "POST",
                         path = "/api/v1/echo",
                         description = "JSON payload echo test endpoint with CORS support."
