@@ -25,3 +25,5 @@ data class SolutionEntity(
     val createdAt: Long,
     val updatedAt: Long
 )
+
+typealias Solution = SolutionEntity

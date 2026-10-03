@@ -172,7 +172,7 @@ class VirtualVolumeManager(private val context: Context) {
             VirtualVolume(
                 id = "app-native-libs",
                 displayName = "Native Shared Libraries (.so)",
-                rootDir = File(context.applicationInfo.nativeLibraryDir),
+                rootDir = File(context.applicationInfo.nativeLibraryDir ?: (context.filesDir.path + "/lib")),
                 isReadOnly = true,
                 description = "Packaged JNI native binaries (.so)"
             )

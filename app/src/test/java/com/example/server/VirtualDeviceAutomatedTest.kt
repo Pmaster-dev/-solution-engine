@@ -119,4 +119,55 @@ class VirtualDeviceAutomatedTest {
         // Clean up
         sourceFile.delete()
     }
+
+    @Test
+    fun testIosSafariPwaHtmlGeneration() {
+        val html = ServerWebPages.getReactSpaHtml(8080, "192.168.1.100")
+        assertTrue("HTML should have iOS web app capable tag", html.contains("apple-mobile-web-app-capable"))
+        assertTrue("HTML should have apple-touch-icon tag", html.contains("apple-touch-icon"))
+        assertTrue("HTML should have manifest link", html.contains("manifest.json"))
+        assertTrue("HTML should support viewport-fit=cover", html.contains("viewport-fit=cover"))
+        assertTrue("HTML should contain iOS & Shortcuts tab", html.contains("iOS & Shortcuts"))
+        assertTrue("HTML should contain Room DB Live Solver tab", html.contains("Live Solver & Room DB"))
+    }
+
+    @Test
+    fun testIosMinimalHtmlGeneration() {
+        val html = ServerWebPages.getMinimalHtml(8080, "192.168.1.100")
+        assertTrue("Minimal HTML should have apple-mobile-web-app-capable tag", html.contains("apple-mobile-web-app-capable"))
+        assertTrue("Minimal HTML should mention iOS & PWA", html.contains("iOS & PWA READY"))
+        assertTrue("Minimal HTML should mention Apple Shortcuts", html.contains("/api/v1/solve"))
+    }
+
+    @Test
+    fun testSolutionDaoGetAllSolutionsList() = runBlocking {
+        val database = com.example.data.local.AppDatabase.getInstance(context)
+        val dao = database.solutionDao()
+        val testSolution = com.example.data.local.SolutionEntity(
+            id = "test-ios-123",
+            problemTitle = "iOS Concurrency Bottleneck",
+            platform = "iOS Safari PWA",
+            problemNumberOrId = "SE-1001",
+            problemUrl = "http://localhost:8080/",
+            difficulty = "Hard",
+            tagsJson = "[\"ios\", \"concurrency\"]",
+            language = "Kotlin",
+            codeSnippet = "val ready = true",
+            timeComplexity = "O(1)",
+            spaceComplexity = "O(1)",
+            approachExplanation = "Root cause analyzed via 5-whys.",
+            verdict = "Accepted",
+            runtimeMs = 10,
+            memoryMb = 2.5,
+            notes = "Test note",
+            isFavorite = true,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        dao.insertSolution(testSolution)
+
+        val list = dao.getAllSolutionsList()
+        assertTrue("getAllSolutionsList should return inserted solution", list.any { it.id == "test-ios-123" })
+        assertEquals("iOS Concurrency Bottleneck", list.first { it.id == "test-ios-123" }.problemTitle)
+    }
 }

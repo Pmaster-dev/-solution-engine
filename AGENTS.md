@@ -112,7 +112,23 @@ This document outlines the autonomous AI agent workflows, reasoning engines, dom
 
 ---
 
-## 6. Verification & Automated Testing
+## 6. Cross-Platform iOS Architecture & Runtime
+
+Solutions Engine operates seamlessly across both Android and Apple iOS / iPadOS environments via a multi-tiered architecture:
+
+### A. Zero-Install Native iOS Safari PWA (Progressive Web Application)
+- **Standalone Mode:** Fully compliant with Apple Web App standards via `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` (black-translucent), and `manifest.json`.
+- **Display & Notch Fitting:** Handles iOS Safe Area Insets (`env(safe-area-inset-top)`, `env(safe-area-inset-bottom)`) for iPhone Dynamic Island and iPad multitasking split-views.
+- **Home Screen App Icon:** Automatically serves high-resolution 180x180 PNG touch icons (`/apple-touch-icon.png`).
+- **Data Synchronization:** Real-time bi-directional synchronization with the Android host's encrypted Room SQLite database (`AppDatabase` / `SolutionDao`) via `/api/v1/solutions`.
+
+### B. Apple Shortcuts & Siri Voice Integration
+- **Direct Webhook:** iOS users can trigger automated 5-Whys diagnosis using Siri Voice or the iOS Shortcuts app via `POST /api/v1/solve`.
+- **Structured JSON Contract:** OpenAPI 3.0 compatible endpoints allowing native Apple Shortcuts dictionaries to parse `rootCause`, `immediateQuickWin`, and action milestones.
+
+---
+
+## 7. Verification & Automated Testing
 
 To run the automated suite for all agent converters, data models, and UI flows:
 

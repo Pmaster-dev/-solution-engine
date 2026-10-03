@@ -363,6 +363,134 @@ fun HttpServerScreen(
             }
         }
 
+        // iOS & Apple Ecosystem Card
+        item {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFF38BDF8).copy(alpha = 0.2f),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("🍎", fontSize = 18.sp)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "iOS Client & Apple Ecosystem",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Zero-Install Safari PWA & Siri Automation",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF0284C7).copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "iOS 16-18 Ready",
+                                color = Color(0xFF38BDF8),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "Solutions Engine runs on any iPhone or iPad without needing Xcode or the App Store:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF0F172A), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text("1. ", fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8), fontSize = 12.sp)
+                            Text(
+                                text = "Open Safari on iPhone/iPad: $serverUrl",
+                                color = Color(0xFFE2E8F0),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text("2. ", fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8), fontSize = 12.sp)
+                            Text(
+                                text = "Tap the Share icon (box with up arrow) & select 'Add to Home Screen'.",
+                                color = Color(0xFFE2E8F0),
+                                fontSize = 12.sp
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text("3. ", fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8), fontSize = 12.sp)
+                            Text(
+                                text = "Launch standalone PWA with notch support and full Room DB sync.",
+                                color = Color(0xFFE2E8F0),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(serverUrl))
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).testTag("copy_ios_safari_url_button")
+                        ) {
+                            Text("Copy Safari Link", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val siriCurl = "curl -X POST $serverUrl/api/v1/solve -H \"Content-Type: application/json\" -d '{\"problem\": \"Database latency spike\", \"framework\": \"5-whys\"}'"
+                                clipboardManager.setText(AnnotatedString(siriCurl))
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).testTag("copy_ios_shortcuts_curl_button")
+                        ) {
+                            Text("Copy Siri cURL", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
         // Available API Endpoints
         item {
             Card(
@@ -380,13 +508,37 @@ fun HttpServerScreen(
                     EndpointItem(
                         method = "GET",
                         path = "/ (or /react)",
-                        description = "Full-featured React 18 SPA Console with Live Telemetry, Polling & REST Tester."
+                        description = "Full-featured React 18 SPA Console with Live Telemetry, Polling, iOS PWA & REST Tester."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/manifest.json & /apple-touch-icon.png",
+                        description = "Web App Manifest and 180x180 PNG icon for iOS home screen installation."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET / POST",
+                        path = "/api/v1/solutions",
+                        description = "Query or insert solutions into the host Room SQLite database from iOS or web."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "POST",
+                        path = "/api/v1/solve",
+                        description = "Apple Shortcuts and Siri webhook for instantaneous 5-Whys problem deconstruction."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EndpointItem(
+                        method = "GET",
+                        path = "/api/v1/ios/shortcut",
+                        description = "Apple Shortcuts automation configuration and Siri trigger instructions."
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     EndpointItem(
                         method = "GET",
                         path = "/html (or /simple)",
-                        description = "Ultra-lightweight zero-dependency HTML dashboard."
+                        description = "Ultra-lightweight zero-dependency HTML dashboard with iOS PWA support."
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     EndpointItem(

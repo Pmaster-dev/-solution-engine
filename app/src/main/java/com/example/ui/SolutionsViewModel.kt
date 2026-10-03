@@ -84,6 +84,7 @@ class SolutionsViewModel(application: Application) : AndroidViewModel(applicatio
         )
         viewModelScope.launch {
             repository.seedInitialDataIfEmpty()
+            httpServer.startServer(8080)
         }
     }
 

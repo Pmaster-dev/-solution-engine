@@ -13,6 +13,9 @@ interface SolutionDao {
     @Query("SELECT * FROM competitive_solutions ORDER BY updatedAt DESC")
     fun getAllSolutions(): Flow<List<SolutionEntity>>
 
+    @Query("SELECT * FROM competitive_solutions ORDER BY updatedAt DESC")
+    suspend fun getAllSolutionsList(): List<SolutionEntity>
+
     @Query("SELECT * FROM competitive_solutions WHERE id = :id")
     fun getSolutionById(id: String): Flow<SolutionEntity?>
 
